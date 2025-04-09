@@ -17,7 +17,7 @@ pipeline {
     stages {
         stage('GIT') {
             steps {
-                git branch: 'main', url: 'https://github.com/saifGt/4twin2-fiveA-s-stationski.git'
+                git branch: 'saifMeddeb', url: 'https://github.com/saifGt/4twin2-skyStation.git'
             }
         }
 
