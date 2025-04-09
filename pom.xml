@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>tn.esprit.spring</groupId>
-	<artifactId>gestion-station-ski</artifactId>
+	<artifactId>saifMeddeb4twin2</artifactId>
 	<version>1.0</version>
 	<name>gestion-station-ski</name>
 	<description>Demo project for Spring Boot</description>
