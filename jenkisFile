@@ -21,20 +21,7 @@ pipeline {
             }
         }
 
-        stage('Check MySQL Connection') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'MYSQL_CREDENTIALS', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS')]) {
-                        def exitCode = sh(script: "mysql -u${DB_USER} -p${DB_PASS} -e 'SHOW DATABASES;'", returnStatus: true)
-                        if (exitCode != 0) {
-                            error "❌ Échec de connexion à MySQL. Vérifie les credentials."
-                        } else {
-                            echo "✅ Connexion à MySQL réussie."
-                        }
-                    }
-                }
-            }
-        }
+       
 
         stage('Compile Stage') {
             steps {
