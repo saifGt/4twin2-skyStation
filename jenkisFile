@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    tools { 
+        jdk 'JAVA_HOME' 
+        maven 'M2_HOME' 
+    }
+
+    environment {
+        DB_URL = 'jdbc:mysql://localhost:3306/stationSki'
+        NEXUS_REPO_URL = "http://127.0.0.1:8081/repository/maven-releases/"
+        MAVEN_SETTINGS = "/usr/share/maven/conf/settings.xml"
+    }
+    
+   
+
+    stages {
+        stage('GIT') {
+            steps {
+                git branch: 'main', url: 'https://github.com/saifGt/4twin2-fiveA-s-stationski.git'
+            }
+        }
+
+        stage('Check MySQL Connection') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'MYSQL_CREDENTIALS', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS')]) {
+                        def exitCode = sh(script: "mysql -u${DB_USER} -p${DB_PASS} -e 'SHOW DATABASES;'", returnStatus: true)
+                        if (exitCode != 0) {
+                            error "❌ Échec de connexion à MySQL. Vérifie les credentials."
+                        } else {
+                            echo "✅ Connexion à MySQL réussie."
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Compile Stage') {
+            steps {
+                sh 'mvn clean install -DskipTests'
+            }
+        }
+/*
+        stage('Test Stage') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+    }
+*/
+        
+          stage('SonarQube Analysis') {
+            steps {
+                sh 'mvn sonar:sonar -Dsonar.token=squ_a00c5e4f4a5e7c215ec4200efcd5e854ef328705 -Dmaven.test.skip=true'
+            }
+        }
+/*        
+ stage('Deploy to Nexus') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                            mvn deploy --settings ${MAVEN_SETTINGS} -DskipTests
+                        '''
+                    } catch (Exception e) {
+                        echo "Deployment to Nexus failed: ${e.message}"
+                        throw e // Rethrow to fail the pipeline if deployment fails
+                    }
+                }
+            }
+        }*/
+    }
+}
