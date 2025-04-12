@@ -10,7 +10,7 @@ pipeline {
         DB_URL = 'jdbc:mysql://localhost:3306/stationSki'
         NEXUS_REPO_URL = "http://127.0.0.1:8081/repository/maven-releases/"
         MAVEN_SETTINGS = "/usr/share/maven/conf/settings.xml"
-        DOCKER_IMAGE = 'saifmed/saifmeddeb4twin2:v1.0'
+        DOCKER_IMAGE = 'saifmed/saifMeddeb4twin2-1.0'
     }
 
     stages {
