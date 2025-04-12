@@ -2,77 +2,55 @@ pipeline {
     agent any
 
     tools { 
-        jdk 'JAVA_HOME' 
-        maven 'M2_HOME' 
+        jdk 'JAVA_HOME'
+        maven 'M2_HOME'
     }
 
     environment {
         DB_URL = 'jdbc:mysql://localhost:3306/stationSki'
         NEXUS_REPO_URL = "http://127.0.0.1:8081/repository/maven-releases/"
         MAVEN_SETTINGS = "/usr/share/maven/conf/settings.xml"
+        DOCKER_IMAGE = 'saifgt/saifmeddeb4twin2:v1.0'
     }
-    
-   
+
     stages {
-        stage('GIT') {
+
+        stage('Checkout Code') {
             steps {
                 git branch: 'saifMeddeb', url: 'https://github.com/saifGt/4twin2-skyStation.git'
             }
         }
 
-       
-
-        stage('Compile Stage') {
+        stage('Build with Maven') {
             steps {
                 sh 'mvn clean install -DskipTests'
             }
         }
-/*
-        stage('Test Stage') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-    }
-*/
-        
-          stage('SonarQube Analysis') {
+
+        stage('SonarQube Analysis') {
             steps {
                 sh 'mvn sonar:sonar -Dsonar.token=squ_a00c5e4f4a5e7c215ec4200efcd5e854ef328705 -Dmaven.test.skip=true'
             }
         }
-/*
-       
- stage('Deploy to Nexus') {
+
+        stage('Docker Login') {
             steps {
-                script {
-                    try {
-                        sh '''
-                            mvn deploy --settings ${MAVEN_SETTINGS} -DskipTests
-                        '''
-                    } catch (Exception e) {
-                        echo "Deployment to Nexus failed: ${e.message}"
-                        throw e // Rethrow to fail the pipeline if deployment fails
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                 }
             }
         }
-*/
-    stage('Build Docker Image') {
-    steps {
-        sh 'docker build -t saifgt/saifmeddeb4twin2:v1.0 .'
-    }
-  }
 
-stage('Push Docker Image to DockerHub') {
-    steps {
-        script {
-            docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
-                sh 'docker push saifgt/saifmeddeb4twin2:v1.0'
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
-    }
-}
 
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                sh 'docker push $DOCKER_IMAGE'
+            }
+        }
     }
 }
