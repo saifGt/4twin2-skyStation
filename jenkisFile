@@ -10,11 +10,14 @@ pipeline {
         DB_URL = 'jdbc:mysql://localhost:3306/stationSki'
         NEXUS_REPO_URL = "http://127.0.0.1:8081/repository/maven-releases/"
         MAVEN_SETTINGS = "/usr/share/maven/conf/settings.xml"
-        DOCKER_IMAGE = 'saifmed/saifmeddeb4twin2:v1.0'
+
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+
+        DOCKER_IMAGE_NAME = 'saifmed/saifmeddeb4twin2'
+        DOCKER_IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 git branch: 'saifMeddeb', url: 'https://github.com/saifGt/4twin2-skyStation.git'
@@ -27,7 +30,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+       stage('SonarQube Analysis') {
             steps {
                 sh 'mvn sonar:sonar -Dsonar.token=squ_a00c5e4f4a5e7c215ec4200efcd5e854ef328705 -Dmaven.test.skip=true'
             }
@@ -35,22 +38,55 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                }
+                sh 'echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
+                sh "docker tag ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ${DOCKER_IMAGE_NAME}:latest"
             }
         }
 
         stage('Push Docker Image to DockerHub') {
             steps {
-                sh 'docker push $DOCKER_IMAGE'
+                sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+                sh "docker push ${DOCKER_IMAGE_NAME}:latest"
             }
+        }
+
+        stage('Deploy with Docker Compose') {
+            steps {
+                script {
+                    sh """
+                    sed -i 's|image: saifmed/saifmeddeb4twin2:.*|image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}|' docker-compose.yml
+                    """
+
+                    sh 'docker-compose down'
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                sh 'docker-compose down'
+                sh 'docker system prune -f'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout'
+            cleanWs()
+        }
+        success {
+            echo '🚀 Pipeline executed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline execution failed!'
         }
     }
 }
