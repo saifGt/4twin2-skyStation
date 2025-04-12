@@ -12,7 +12,7 @@ services:
       - mysql_data:/var/lib/mysql
 
   backend:
-    image: saifmed/saifmeddeb4twin2:v1.0
+    image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}  # Utilisation de la variable dynamique du pipeline Jenkins
     depends_on:
       - db
     ports:
