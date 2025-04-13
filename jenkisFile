@@ -43,11 +43,6 @@ pipeline {
                 }
             }
         }
-        stage('Archive Test Results') {
-          steps {
-           junit '**/target/surefire-reports/*.xml'
-        }
-       }
 
        stage('SonarQube Analysis') {
             steps {
