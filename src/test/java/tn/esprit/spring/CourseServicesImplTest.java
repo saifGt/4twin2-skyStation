@@ -42,11 +42,11 @@ class CourseServicesImplTest {
 
     @Test
     void testAddCourse() {
-        // Given
+
         when(courseRepository.save(any(Course.class))).thenReturn(course);
-        // When
+
         Course result = courseServices.addCourse(course);
-        // Then
+
         assertNotNull(result);
         assertEquals(course.getNumCourse(), result.getNumCourse());
         assertEquals(course.getPrice(), result.getPrice());
@@ -113,5 +113,5 @@ class CourseServicesImplTest {
         verify(courseRepository, times(1)).findById(99L);
     }
 
-   
+
 }
