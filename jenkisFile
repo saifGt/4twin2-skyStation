@@ -50,6 +50,21 @@ pipeline {
             }
         }
 
+        stage('Deploy to Nexus') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                            mvn deploy --settings ${MAVEN_SETTINGS} -DskipTests
+                        '''
+                    } catch (Exception e) {
+                        echo "Deployment to Nexus failed: ${e.message}"
+                        throw e 
+                    }
+                }
+            }
+        }
+
         stage('Docker Login') {
             steps {
                 sh 'echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin'
