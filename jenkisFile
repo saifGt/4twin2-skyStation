@@ -30,6 +30,12 @@ pipeline {
             }
         }
 
+          stage('Run Unit Tests') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
        stage('SonarQube Analysis') {
             steps {
                 sh 'mvn sonar:sonar -Dsonar.token=squ_a00c5e4f4a5e7c215ec4200efcd5e854ef328705 -Dmaven.test.skip=true'
